@@ -6,5 +6,6 @@ const (
 )
 
 const (
-	TopicOrders = "orders"
+	TopicOrders          = "orders"
+	OrdersConsumerGroups = "orders"
 )

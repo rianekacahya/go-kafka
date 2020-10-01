@@ -11,19 +11,18 @@ import (
 )
 
 type (
-	KafkaOffset string
-
 	Gokafka struct {
 		AddressFamily string
 		Address       string
 		MaxRetry      int
 	}
 
-	HandlerFunc func(context.Context, Reader) error
+	HandlerFunc func(context.Context, *Reader) error
 
 	Reader struct {
-		Gokafka *Gokafka
-		Message *kafka.Message
+		Gokafka  *Gokafka
+		Consumer *kafka.Consumer
+		Message  *kafka.Message
 	}
 
 	ConsumerConfig struct {
@@ -33,7 +32,7 @@ type (
 		AutoRebalance   bool
 		AutoCommit      bool
 		PartitionEOF    bool
-		AutoOffsetReset KafkaOffset
+		AutoOffsetReset string
 	}
 
 	ProducerConfig struct {
@@ -45,13 +44,13 @@ type (
 )
 
 const (
-	OffsetEarliest KafkaOffset = "earliest"
-	OffsetLatest   KafkaOffset = "latest"
-	OffsetNone     KafkaOffset = "none"
+	OffsetEarliest = "earliest"
+	OffsetLatest   = "latest"
+	OffsetNone     = "none"
 )
 
 const (
-	HeadersRequestID     = "request_id"
+	HeadersRequestID = "request_id"
 )
 
 func New(address, addressfamily string, maxretry int) *Gokafka {
@@ -77,11 +76,17 @@ func (k *Gokafka) Consumer(ctx context.Context, config *ConsumerConfig, action H
 		select {
 		case <-ctx.Done():
 			return nil
-		case ev := <-c.Events():
+		default:
+			ev := c.Poll(100)
+			if ev == nil {
+				continue
+			}
+
 			switch e := ev.(type) {
 			case *kafka.Message:
-				err := action(ctx, Reader{k, e})
-				k.error(err, e)
+				if err := action(ctx, &Reader{k, c, e}); err != nil {
+					k.error(err, e)
+				}
 			case kafka.Error:
 				k.error(e, nil)
 			case kafka.PartitionEOF:
