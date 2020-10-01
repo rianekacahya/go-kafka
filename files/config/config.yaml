@@ -1,0 +1,15 @@
+debug: false
+kafka:
+  address: 127.0.0.1:9092
+  retry_pool: retry
+  max_retry: 3
+rest:
+  port: 8080
+  read_timeout: 5
+  write_timeout: 5
+  idle_timeout: 5
+mysql:
+  dsn: "root:basic@tcp(127.0.0.1:3306)/orders?parseTime=true"
+  max_open: 100
+  max_idle: 50
+  timeout: 3600
