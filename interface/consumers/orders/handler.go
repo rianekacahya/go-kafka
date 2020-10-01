@@ -12,32 +12,23 @@ type event struct {
 	ordersUsecase usecase.OrdersUsecase
 }
 
-func NewHandler(ctx context.Context, kafkago *gokafka.Gokafka, ordersUsecase usecase.OrdersUsecase) error {
-	var (
-		err       error
-		transport = event{ordersUsecase}
-	)
+func NewHandler(ctx context.Context, kafkago *gokafka.Gokafka, ordersUsecase usecase.OrdersUsecase) {
+	transport := event{ordersUsecase}
 
 	// start order consumer
-	if err = kafkago.Consumer(ctx, &gokafka.ConsumerConfig{
+	go kafkago.Consumer(ctx, &gokafka.ConsumerConfig{
 		Topic:           entity.TopicOrders,
 		GroupID:         entity.OrdersConsumerGroups,
-		SessionTimeout:  6000,
 		AutoOffsetReset: gokafka.OffsetEarliest,
-	}, transport.OrderConsumers); err != nil {
-		return err
-	}
+		AutoRebalance:   true,
+	}, transport.OrderConsumers)
 
-	if err = kafkago.Consumer(ctx, &gokafka.ConsumerConfig{
+	go kafkago.Consumer(ctx, &gokafka.ConsumerConfig{
 		Topic:           "kuda",
 		GroupID:         "kuda",
-		SessionTimeout:  6000,
+		AutoRebalance:   true,
 		AutoOffsetReset: gokafka.OffsetEarliest,
-	}, transport.OrderConsumers); err != nil {
-		return err
-	}
-
-	return nil
+	}, transport.OrderConsumers)
 }
 
 func (e *event) OrderConsumers(ctx context.Context, reader *gokafka.Reader) error {

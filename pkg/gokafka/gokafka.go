@@ -8,6 +8,7 @@ import (
 	"github.com/rianekacahya/go-kafka/pkg/logger"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"log"
 )
 
 type (
@@ -57,25 +58,25 @@ func New(address, addressfamily string, maxretry int) *Gokafka {
 	return &Gokafka{address, addressfamily, maxretry}
 }
 
-func (k *Gokafka) Consumer(ctx context.Context, config *ConsumerConfig, action HandlerFunc) error {
+func (k *Gokafka) Consumer(ctx context.Context, config *ConsumerConfig, action HandlerFunc) {
 	conf, err := config.configurating(k)
 	if err != nil {
-		return err
+		log.Fatalf("got an error while bootsraping consumer, error: %s", err)
 	}
 
 	c, err := kafka.NewConsumer(&conf)
 	if err != nil {
-		return err
+		log.Fatalf("got an error while bootsraping consumer, error: %s", err)
 	}
 
 	if err := c.SubscribeTopics([]string{config.Topic}, nil); err != nil {
-		return err
+		log.Fatalf("got an error while bootsraping consumer error: %s", err)
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			return nil
+			return
 		default:
 			ev := c.Poll(100)
 			if ev == nil {

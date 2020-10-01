@@ -41,9 +41,7 @@ var (
 			ordersUsecase := usecase.NewOrdersUsecase(ordersRepository, eventInvoker)
 
 			// starting order consumers
-			if err := orders.NewHandler(ctx, kafkago, ordersUsecase); err != nil {
-				log.Fatalf("got an error while bootstraping order consumers, error: %s", err)
-			}
+			orders.NewHandler(ctx, kafkago, ordersUsecase)
 
 			quit := make(chan os.Signal)
 			signal.Notify(quit, os.Interrupt)
