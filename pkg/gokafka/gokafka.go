@@ -3,7 +3,6 @@ package gokafka
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/rianekacahya/go-kafka/pkg/logger"
 	"go.uber.org/zap"
@@ -13,34 +12,22 @@ import (
 
 type (
 	Gokafka struct {
-		AddressFamily string
-		Address       string
-		MaxRetry      int
+		Address string
 	}
 
 	HandlerFunc func(context.Context, *Reader) error
+
+	Payload struct {
+		Topic   string
+		Value   []byte
+		Key     []byte
+		Headers []kafka.Header
+	}
 
 	Reader struct {
 		Gokafka  *Gokafka
 		Consumer *kafka.Consumer
 		Message  *kafka.Message
-	}
-
-	ConsumerConfig struct {
-		Topic           string
-		GroupID         string
-		SessionTimeout  int
-		AutoRebalance   bool
-		AutoCommit      bool
-		PartitionEOF    bool
-		AutoOffsetReset string
-	}
-
-	ProducerConfig struct {
-		Idempotence bool
-		Headers     []kafka.Header
-		Topic       string
-		Value       []byte
 	}
 )
 
@@ -50,26 +37,19 @@ const (
 	OffsetNone     = "none"
 )
 
-const (
-	HeadersRequestID = "request_id"
-)
-
-func New(address, addressfamily string, maxretry int) *Gokafka {
-	return &Gokafka{address, addressfamily, maxretry}
+func New(address string) *Gokafka {
+	return &Gokafka{address}
 }
 
-func (k *Gokafka) Consumer(ctx context.Context, config *ConsumerConfig, action HandlerFunc) {
-	conf, err := config.configurating(k)
+func (k *Gokafka) Consumer(ctx context.Context, topic []string, config kafka.ConfigMap, action HandlerFunc) {
+	config["bootstrap.servers"] = k.Address
+
+	c, err := kafka.NewConsumer(&config)
 	if err != nil {
 		log.Fatalf("got an error while bootsraping consumer, error: %s", err)
 	}
 
-	c, err := kafka.NewConsumer(&conf)
-	if err != nil {
-		log.Fatalf("got an error while bootsraping consumer, error: %s", err)
-	}
-
-	if err := c.SubscribeTopics([]string{config.Topic}, nil); err != nil {
+	if err := c.SubscribeTopics(topic, nil); err != nil {
 		log.Fatalf("got an error while bootsraping consumer error: %s", err)
 	}
 
@@ -84,84 +64,30 @@ func (k *Gokafka) Consumer(ctx context.Context, config *ConsumerConfig, action H
 			}
 
 			switch e := ev.(type) {
+			case kafka.AssignedPartitions:
+				if err := c.Assign(e.Partitions); err != nil {
+					k.error(err, nil)
+				}
+			case kafka.RevokedPartitions:
+				if err := c.Unassign(); err != nil {
+					k.error(err, nil)
+				}
 			case *kafka.Message:
 				if err := action(ctx, &Reader{k, c, e}); err != nil {
 					k.error(err, e)
 				}
 			case kafka.Error:
 				k.error(e, nil)
-			case kafka.PartitionEOF:
+			default:
 			}
 		}
 	}
 }
 
-func (cc *ConsumerConfig) configurating(gokafka *Gokafka) (kafka.ConfigMap, error) {
-	var conf = make(kafka.ConfigMap)
+func (k *Gokafka) Publish(ctx context.Context, payload *Payload, config kafka.ConfigMap) error {
+	config["bootstrap.servers"] = k.Address
 
-	if cc.Topic == "" {
-		return nil, errors.New("topic can't be null")
-	}
-
-	if err := conf.SetKey("bootstrap.servers", gokafka.Address); err != nil {
-		return nil, err
-	}
-
-	if err := conf.SetKey("broker.address.family", gokafka.AddressFamily); err != nil {
-		return nil, err
-	}
-
-	if err := conf.SetKey("enable.auto.commit", cc.AutoCommit); err != nil {
-		return nil, err
-	}
-
-	if err := conf.SetKey("enable.partition.eof", cc.PartitionEOF); err != nil {
-		return nil, err
-	}
-
-	if err := conf.SetKey("go.application.rebalance.enable", cc.AutoRebalance); err != nil {
-		return nil, err
-	}
-
-	if err := conf.SetKey("group.id", cc.GroupID); err != nil {
-		return nil, err
-	}
-
-	if cc.SessionTimeout != 0 {
-		if err := conf.SetKey("session.timeout.ms", cc.SessionTimeout); err != nil {
-			return nil, err
-		}
-	}
-
-	if cc.AutoOffsetReset != "" {
-		if err := conf.SetKey("auto.offset.reset", cc.AutoOffsetReset); err != nil {
-			return nil, err
-		}
-	} else {
-		if err := conf.SetKey("auto.offset.reset", OffsetNone); err != nil {
-			return nil, err
-		}
-	}
-
-	return conf, nil
-}
-
-func (k *Gokafka) Publish(ctx context.Context, config *ProducerConfig) error {
-	var conf = make(kafka.ConfigMap)
-
-	if err := conf.SetKey("bootstrap.servers", k.Address); err != nil {
-		return err
-	}
-
-	if err := conf.SetKey("broker.address.family", k.AddressFamily); err != nil {
-		return err
-	}
-
-	if err := conf.SetKey("enable.idempotence", config.Idempotence); err != nil {
-		return err
-	}
-
-	p, err := kafka.NewProducer(&conf)
+	p, err := kafka.NewProducer(&config)
 	if err != nil {
 		return err
 	}
@@ -170,9 +96,10 @@ func (k *Gokafka) Publish(ctx context.Context, config *ProducerConfig) error {
 	defer close(delivery)
 
 	err = p.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &config.Topic, Partition: kafka.PartitionAny},
-		Value:          config.Value,
-		Headers:        config.Headers,
+		TopicPartition: kafka.TopicPartition{Topic: &payload.Topic, Partition: kafka.PartitionAny},
+		Key:            payload.Key,
+		Value:          payload.Value,
+		Headers:        payload.Headers,
 	}, delivery)
 	if err != nil {
 		return err
@@ -197,7 +124,7 @@ func (k *Gokafka) error(err error, msg *kafka.Message) {
 		var requestID string
 
 		for _, v := range msg.Headers {
-			if v.Key == HeadersRequestID {
+			if v.Key == "request_id" {
 				requestID = string(v.Value)
 			}
 

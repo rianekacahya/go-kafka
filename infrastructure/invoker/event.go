@@ -24,43 +24,16 @@ func (e *event) OrderProducers(ctx context.Context, payload *entity.Orders) erro
 		return crashy.Wrap(err, crashy.ErrCodeFormatting, "error when encode request body to json")
 	}
 
-	// tes publish message
-	err = e.kafkago.Publish(ctx, &gokafka.ProducerConfig{
+	err = e.kafkago.Publish(ctx, &gokafka.Payload{
 		Topic: entity.TopicOrders,
 		Value: body,
 		Headers: []kafka.Header{
 			{
-				Key:   gokafka.HeadersRequestID,
+				Key:   entity.ContextRequestID,
 				Value: []byte(helper.GetContextString(ctx, entity.ContextRequestID)),
 			},
 		},
-	})
-
-	if err != nil {
-		return crashy.Wrap(err, crashy.ErrCodeSend, "sending kafka message failed")
-	}
-
-	payload.CustomerEmail.Scan("saya@kuda.com")
-	body1, err := json.Marshal(payload)
-	if err != nil {
-		return crashy.Wrap(err, crashy.ErrCodeFormatting, "error when encode request body to json")
-	}
-
-	// tes publish message
-	err = e.kafkago.Publish(ctx, &gokafka.ProducerConfig{
-		Topic: "kuda",
-		Value: body1,
-		Headers: []kafka.Header{
-			{
-				Key:   gokafka.HeadersRequestID,
-				Value: []byte(helper.GetContextString(ctx, entity.ContextRequestID)),
-			},
-		},
-	})
-
-	if err != nil {
-		return crashy.Wrap(err, crashy.ErrCodeSend, "sending kafka message failed")
-	}
+	}, kafka.ConfigMap{})
 
 	return nil
 }

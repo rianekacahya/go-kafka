@@ -26,9 +26,7 @@ var (
 			// init infrastructure
 			database := initMysql()
 			kafkago := gokafka.New(
-				"v4",
 				goconf.Config().GetString("kafka.address"),
-				goconf.Config().GetInt("kafka.max_retry"),
 			)
 
 			// init event invoker

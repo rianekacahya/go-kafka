@@ -3,6 +3,7 @@ package orders
 import (
 	"context"
 	"fmt"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/rianekacahya/go-kafka/domain/entity"
 	"github.com/rianekacahya/go-kafka/domain/usecase"
 	"github.com/rianekacahya/go-kafka/pkg/gokafka"
@@ -15,19 +16,12 @@ type event struct {
 func NewHandler(ctx context.Context, kafkago *gokafka.Gokafka, ordersUsecase usecase.OrdersUsecase) {
 	transport := event{ordersUsecase}
 
-	// start order consumer
-	go kafkago.Consumer(ctx, &gokafka.ConsumerConfig{
-		Topic:           entity.TopicOrders,
-		GroupID:         entity.OrdersConsumerGroups,
-		AutoOffsetReset: gokafka.OffsetEarliest,
-		AutoRebalance:   true,
-	}, transport.OrderConsumers)
-
-	go kafkago.Consumer(ctx, &gokafka.ConsumerConfig{
-		Topic:           "kuda",
-		GroupID:         "kuda",
-		AutoRebalance:   true,
-		AutoOffsetReset: gokafka.OffsetEarliest,
+	go kafkago.Consumer(ctx, []string{entity.TopicOrders}, kafka.ConfigMap{
+		"group.id":                        entity.OrdersConsumerGroups,
+		"go.application.rebalance.enable": true,
+		"enable.partition.eof":            false,
+		"enable.auto.commit":              false,
+		"auto.offset.reset":               gokafka.OffsetEarliest,
 	}, transport.OrderConsumers)
 }
 
