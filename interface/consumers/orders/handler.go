@@ -2,10 +2,11 @@ package orders
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/rianekacahya/go-kafka/domain/entity"
 	"github.com/rianekacahya/go-kafka/domain/usecase"
+	"github.com/rianekacahya/go-kafka/pkg/crashy"
 	"github.com/rianekacahya/go-kafka/pkg/gokafka"
 )
 
@@ -26,7 +27,18 @@ func NewHandler(ctx context.Context, kafkago *gokafka.Gokafka, ordersUsecase use
 }
 
 func (e *event) OrderConsumers(ctx context.Context, reader *gokafka.Reader) error {
-	fmt.Println(string(reader.Message.Value))
-	_, err := reader.Consumer.Commit()
-	return err
+	var req = new(entity.Orders)
+
+	defer reader.Consumer.Commit()
+
+	// serialize message from kafka
+	if err := json.Unmarshal(reader.Message.Value, req); err != nil {
+		return crashy.Wrap(err, crashy.ErrCodeFormatting, "Failed when serialize data")
+	}
+
+	if err := e.ordersUsecase.SaveOrders(ctx, req); err != nil {
+		return err
+	}
+
+	return nil
 }

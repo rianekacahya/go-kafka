@@ -5,6 +5,7 @@ import (
 	"github.com/rianekacahya/go-kafka/infrastructure/invoker"
 	"github.com/rianekacahya/go-kafka/infrastructure/persistence"
 	"github.com/rianekacahya/go-kafka/interface/consumers/orders"
+	"github.com/rianekacahya/go-kafka/middleware/event"
 	"github.com/rianekacahya/go-kafka/pkg/goconf"
 	"github.com/rianekacahya/go-kafka/pkg/gokafka"
 	"github.com/rianekacahya/go-kafka/usecase"
@@ -27,6 +28,7 @@ var (
 			database := initMysql()
 			kafkago := gokafka.New(
 				goconf.Config().GetString("kafka.address"),
+				event.Logger(),
 			)
 
 			// init event invoker

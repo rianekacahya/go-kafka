@@ -2,20 +2,18 @@ package gokafka
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/rianekacahya/go-kafka/pkg/logger"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"log"
 )
 
 type (
 	Gokafka struct {
-		Address string
+		Address    string
+		Middleware []MiddlewareFunc
 	}
 
 	HandlerFunc func(context.Context, *Reader) error
+	MiddlewareFunc func(HandlerFunc) HandlerFunc
 
 	Payload struct {
 		Topic   string
@@ -37,8 +35,8 @@ const (
 	OffsetNone     = "none"
 )
 
-func New(address string) *Gokafka {
-	return &Gokafka{address}
+func New(address string, middleware ...MiddlewareFunc) *Gokafka {
+	return &Gokafka{address, middleware}
 }
 
 func (k *Gokafka) Consumer(ctx context.Context, topic []string, config kafka.ConfigMap, action HandlerFunc) {
@@ -65,20 +63,27 @@ func (k *Gokafka) Consumer(ctx context.Context, topic []string, config kafka.Con
 
 			switch e := ev.(type) {
 			case kafka.AssignedPartitions:
+				log.Println("kafka have new consumer")
 				if err := c.Assign(e.Partitions); err != nil {
-					k.error(err, nil)
+					log.Printf("got an error while assign new consumer, error: %v\n", err)
 				}
 			case kafka.RevokedPartitions:
+				log.Println("kafka have revoked consumer")
 				if err := c.Unassign(); err != nil {
-					k.error(err, nil)
+					log.Printf("got an error while revoke consumer, error: %v\n", err)
 				}
 			case *kafka.Message:
-				if err := action(ctx, &Reader{k, c, e}); err != nil {
-					k.error(err, e)
+				h := action
+				for i := len(k.Middleware) - 1; i >= 0; i-- {
+					h = k.Middleware[i](h)
+				}
+				if err := h(ctx, &Reader{k, c, e}); err != nil {
+					log.Printf("got an error while processing message, error: %v\n", err)
 				}
 			case kafka.Error:
-				k.error(e, nil)
+				log.Printf("got an error while processing event, error: %v\n", e)
 			default:
+				log.Printf("Unhandled event, ignored: %v\n", e)
 			}
 		}
 	}
@@ -113,29 +118,4 @@ func (k *Gokafka) Publish(ctx context.Context, payload *Payload, config kafka.Co
 	}
 
 	return nil
-}
-
-func (k *Gokafka) error(err error, msg *kafka.Message) {
-	fields := []zapcore.Field{
-		zap.Any("error", err),
-	}
-
-	if msg != nil {
-		var requestID string
-
-		for _, v := range msg.Headers {
-			if v.Key == "request_id" {
-				requestID = string(v.Value)
-			}
-
-		}
-
-		fields = append(fields,
-			zap.String("topic", *msg.TopicPartition.Topic),
-			zap.Any("value", json.RawMessage(msg.Value)),
-			zap.String("request_id", requestID),
-		)
-	}
-
-	logger.GetLogger().Error("Kafka Error Logger", fields...)
 }

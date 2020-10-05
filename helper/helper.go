@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // RandomString function for random string
@@ -28,4 +29,12 @@ func GetContextString(ctx context.Context, key string) string {
 		return t
 	}
 	return ""
+}
+
+func TrimLastChar(s string) string {
+	r, size := utf8.DecodeLastRuneInString(s)
+	if r == utf8.RuneError && (size == 0 || size == 1) {
+		size = 0
+	}
+	return s[:len(s)-size]
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/rianekacahya/go-kafka/infrastructure/invoker"
 	"github.com/rianekacahya/go-kafka/infrastructure/persistence"
 	"github.com/rianekacahya/go-kafka/interface/http/orders"
+	"github.com/rianekacahya/go-kafka/middleware/event"
 	"github.com/rianekacahya/go-kafka/middleware/rest"
 	"github.com/rianekacahya/go-kafka/pkg/echoserver"
 	"github.com/rianekacahya/go-kafka/pkg/goconf"
@@ -32,7 +33,9 @@ var (
 			database := initMysql()
 			kafkago := gokafka.New(
 				goconf.Config().GetString("kafka.address"),
+				event.Logger(),
 			)
+			telemetry := initTelemetry()
 
 			// init event invoker
 			eventInvoker := invoker.EventInitialize(kafkago)
@@ -52,6 +55,7 @@ var (
 				rest.Headers(),
 				rest.Logger(),
 				rest.RequestID(),
+				rest.Telemetry(telemetry),
 			)
 
 			// versioning

@@ -7,4 +7,5 @@ import (
 
 type OrdersUsecase interface {
 	SubmitOrders(context.Context, *entity.Orders) error
+	SaveOrders(context.Context, *entity.Orders) error
 }

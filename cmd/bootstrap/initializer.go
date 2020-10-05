@@ -2,8 +2,10 @@ package bootstrap
 
 import (
 	"database/sql"
+	newrelic "github.com/newrelic/go-agent"
 	"github.com/rianekacahya/go-kafka/pkg/goconf"
 	"github.com/rianekacahya/go-kafka/pkg/mysql"
+	"github.com/rianekacahya/go-kafka/pkg/telemetry"
 	"log"
 )
 
@@ -19,4 +21,13 @@ func initMysql() *sql.DB {
 	}
 
 	return db
+}
+
+func initTelemetry() newrelic.Application {
+	app, err := telemetry.New(goconf.Config().GetString("newrelic.id"), goconf.Config().GetString("newrelic.key"))
+	if err != nil {
+		log.Fatalf("got an error while initialize telemetry, error: %s", err)
+	}
+
+	return app
 }
