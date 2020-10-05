@@ -1,7 +1,7 @@
 debug: false
 newrelic:
   id: "order"
-  key: "6f9978486d20726c041112df238cbd6f04cfNRAL"
+  key: ""
 kafka:
   address: 127.0.0.1:9092
   retry_pool: retry
