@@ -26,6 +26,8 @@ func Logger() gokafka.MiddlewareFunc {
 					zap.String("request_id", gokafka.FindHeaders("request_id", reader.Message.Headers)),
 					zap.Any("message", err),
 				)
+
+				return err
 			}
 
 			return nil
