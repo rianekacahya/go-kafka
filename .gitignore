@@ -1,0 +1,13 @@
+### VS Code ###
+.vscode/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+
+## Applications ###
+go.sum
+/files/config/*.yaml
