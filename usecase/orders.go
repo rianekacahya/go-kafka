@@ -5,8 +5,8 @@ import (
 	"github.com/rianekacahya/go-kafka/domain/entity"
 	"github.com/rianekacahya/go-kafka/domain/invoker"
 	"github.com/rianekacahya/go-kafka/domain/repository"
-	"github.com/rianekacahya/go-kafka/helper"
 	"github.com/rianekacahya/go-kafka/pkg/crashy"
+	"github.com/rianekacahya/go-kafka/pkg/helper"
 	"time"
 )
 

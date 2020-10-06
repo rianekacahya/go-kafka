@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/rianekacahya/go-kafka/domain/entity"
-	"github.com/rianekacahya/go-kafka/helper"
 	"github.com/rianekacahya/go-kafka/pkg/crashy"
 	"github.com/rianekacahya/go-kafka/pkg/gokafka"
+	"github.com/rianekacahya/go-kafka/pkg/helper"
 )
 
 type event struct {

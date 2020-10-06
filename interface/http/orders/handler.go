@@ -34,8 +34,7 @@ func (r *rest) submit(c echo.Context) error {
 	}
 
 	// newrelic submit order segment
-	s := newrelic.StartSegment(ntx, "Hanlder.Submit.SubmitOrders")
-	defer s.End()
+	defer newrelic.StartSegment(ntx, "Hanlder.HTTP.Submit").End()
 
 	// call usecase
 	if err = r.ordersUsecase.SubmitOrders(c.Request().Context(), req); err != nil {

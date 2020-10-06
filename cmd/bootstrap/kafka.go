@@ -26,9 +26,11 @@ var (
 
 			// init infrastructure
 			database := initMysql()
+			telemetry := initTelemetry()
 			kafkago := gokafka.New(
 				goconf.Config().GetString("kafka.address"),
 				event.Logger(),
+				event.Telemetry(telemetry),
 			)
 
 			// init event invoker

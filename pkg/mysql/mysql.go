@@ -1,9 +1,12 @@
 package mysql
 
-import(
+import (
 	"database/sql"
-	"time"
+	"encoding/json"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"strings"
+	"time"
 )
 
 func New(dsn string, maxopen, maxidle, timeout int) (*sql.DB, error) {
@@ -21,4 +24,20 @@ func New(dsn string, maxopen, maxidle, timeout int) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func TransformQuery(query string, arg []interface{}) string {
+	var param []interface{}
+	a, _ := json.Marshal(arg)
+	_ = json.Unmarshal(a, &param)
+
+	for i:=0; i < len(param); i++ {
+		if param[i] == nil {
+			param[i] = "NULL"
+		}else{
+			param[i] = fmt.Sprintf("'%v'", param[i])
+		}
+	}
+
+	return fmt.Sprintf(strings.ReplaceAll(query, "?", "%v"), param...)
 }
