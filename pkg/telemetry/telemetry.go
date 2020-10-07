@@ -11,6 +11,7 @@ const (
 
 func New(service, key string) (newrelic.Application, error) {
 	config := newrelic.NewConfig(service, key)
+	config.DistributedTracer.Enabled = true
 	app, err := newrelic.NewApplication(config)
 	if err != nil {
 		return nil, err

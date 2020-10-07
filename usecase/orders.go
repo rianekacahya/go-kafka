@@ -5,7 +5,6 @@ import (
 	"github.com/rianekacahya/go-kafka/domain/entity"
 	"github.com/rianekacahya/go-kafka/domain/invoker"
 	"github.com/rianekacahya/go-kafka/domain/repository"
-	"github.com/rianekacahya/go-kafka/pkg/crashy"
 	"github.com/rianekacahya/go-kafka/pkg/helper"
 	"time"
 )
@@ -21,21 +20,14 @@ func NewOrdersUsecase(ordersRepository repository.OrdersRepository, eventInvoker
 
 func (o *orders) SubmitOrders(ctx context.Context, req *entity.Orders) error {
 	// set purchase date
-	if err := req.PurchaseDate.Scan(time.Now()); err != nil {
-		return crashy.Wrap(err, crashy.ErrCodeFormatting, "Errror when binding purchase date")
-	}
+	req.PurchaseDate = entity.TimeNull(time.Now())
+
 	return o.eventInvoker.OrderProducers(ctx, req)
 }
 
 func (o *orders) SaveOrders(ctx context.Context, req *entity.Orders) error {
 	// set purchase code
-	if err := req.PurchaseCode.Scan(helper.RandomString(20)); err != nil {
-		return crashy.Wrap(err, crashy.ErrCodeFormatting, "Errror when binding purchase code")
-	}
+	req.PurchaseCode = entity.StrNull(helper.RandomString(20))
 
-	if err := o.ordersRepository.SaveOrder(ctx, req); err != nil {
-		return err
-	}
-
-	return nil
+	return o.ordersRepository.SaveOrder(ctx, req)
 }

@@ -14,9 +14,11 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
 	golang.org/x/net v0.0.0-20200927032502-5d4f70055728 // indirect
 	golang.org/x/sys v0.0.0-20200928205150-006507a75852 // indirect
+	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0
 )

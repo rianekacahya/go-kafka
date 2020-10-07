@@ -173,3 +173,30 @@ func (v *NullFloat64) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
+
+func StrNull(s string) NullString {
+	return NullString{
+		NullString: sql.NullString{
+			String: s,
+			Valid:  s != "",
+		},
+	}
+}
+
+func TimeNull(s time.Time) NullTime {
+	return NullTime{
+		NullTime: sql.NullTime{
+			Time:  s,
+			Valid: !s.IsZero(),
+		},
+	}
+}
+
+func Int32Null(s int32) NullInt32 {
+	return NullInt32{
+		NullInt32: sql.NullInt32{
+			Int32: s,
+			Valid: s != 0,
+		},
+	}
+}

@@ -3,8 +3,7 @@ package echoserver
 import (
 	"fmt"
 	"github.com/labstack/echo"
-	"github.com/rianekacahya/go-kafka/pkg/logger"
-	"go.uber.org/zap"
+	"log"
 	"net/http"
 )
 
@@ -52,7 +51,7 @@ func Handler(err error, c echo.Context) {
 			err = c.JSON(code, res)
 		}
 		if err != nil {
-			logger.Error("Echo Server", zap.Any("error", err))
+			log.Printf("echo error wraper failed responding, error: %s", err)
 		}
 	}
 }

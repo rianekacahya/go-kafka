@@ -77,7 +77,7 @@ func (o *orders) SaveOrder(ctx context.Context, order *entity.Orders) error {
 		Product:            newrelic.DatastoreMySQL,
 		Collection:         "order_items",
 		Operation:          "INSERT",
-		ParameterizedQuery: mysql.TransformQuery(query.String(), bind),
+		ParameterizedQuery: mysql.TransformQuery(helper.TrimLastChar(query.String()), bind),
 	}
 
 	_, err = tx.ExecContext(ctx, helper.TrimLastChar(query.String()), bind...)

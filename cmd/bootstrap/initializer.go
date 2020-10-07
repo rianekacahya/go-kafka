@@ -24,7 +24,11 @@ func initMysql() *sql.DB {
 }
 
 func initTelemetry() newrelic.Application {
-	app, err := telemetry.New(goconf.Config().GetString("newrelic.id"), goconf.Config().GetString("newrelic.key"))
+	app, err := telemetry.New(
+		goconf.Config().GetString("newrelic.id"),
+		goconf.Config().GetString("newrelic.key"),
+
+	)
 	if err != nil {
 		log.Fatalf("got an error while initialize telemetry, error: %s", err)
 	}
