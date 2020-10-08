@@ -2,8 +2,10 @@ package bootstrap
 
 import (
 	"database/sql"
+	"github.com/go-redis/redis/v7"
 	newrelic "github.com/newrelic/go-agent"
 	"github.com/rianekacahya/go-kafka/pkg/goconf"
+	"github.com/rianekacahya/go-kafka/pkg/goredis"
 	"github.com/rianekacahya/go-kafka/pkg/mysql"
 	"github.com/rianekacahya/go-kafka/pkg/telemetry"
 	"log"
@@ -34,4 +36,17 @@ func initTelemetry() newrelic.Application {
 	}
 
 	return app
+}
+
+func initRedis() *redis.Client {
+	client, err := goredis.New(
+		goconf.Config().GetString("redis.host"),
+		goconf.Config().GetString("redis.password"),
+	)
+
+	if err != nil {
+		log.Fatalf("got an error while connecting to redis server, error: %s", err)
+	}
+
+	return client
 }

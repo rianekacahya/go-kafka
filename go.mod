@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/confluentinc/confluent-kafka-go v1.4.2
+	github.com/go-redis/redis/v7 v7.4.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang-migrate/migrate/v4 v4.13.0
 	github.com/labstack/echo v3.3.10+incompatible

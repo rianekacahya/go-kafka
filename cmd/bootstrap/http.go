@@ -31,6 +31,7 @@ var (
 
 			// init infrastructure
 			database := initMysql()
+			redis := initRedis()
 			telemetry := initTelemetry()
 			kafkago := gokafka.New(
 				goconf.Config().GetString("kafka.address"),
@@ -38,13 +39,14 @@ var (
 			)
 
 			// init event invoker
+			syncInvoker := invoker.SyncInitialize(redis)
 			eventInvoker := invoker.EventInitialize(kafkago)
 
 			// init repository
 			ordersRepository := persistence.NewOrdersRepository(database)
 
 			// init usecase
-			ordersUsecase := usecase.NewOrdersUsecase(ordersRepository, eventInvoker)
+			ordersUsecase := usecase.NewOrdersUsecase(ordersRepository, eventInvoker, syncInvoker)
 
 			// init echo server
 			server := echoserver.NewServer(goconf.Config().GetBool("debug"))
