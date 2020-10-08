@@ -5,9 +5,11 @@ import (
 	"github.com/go-redis/redis/v7"
 	newrelic "github.com/newrelic/go-agent"
 	"github.com/rianekacahya/go-kafka/pkg/goconf"
+	"github.com/rianekacahya/go-kafka/pkg/golog"
 	"github.com/rianekacahya/go-kafka/pkg/goredis"
 	"github.com/rianekacahya/go-kafka/pkg/mysql"
 	"github.com/rianekacahya/go-kafka/pkg/telemetry"
+	"go.uber.org/zap"
 	"log"
 )
 
@@ -49,4 +51,13 @@ func initRedis() *redis.Client {
 	}
 
 	return client
+}
+
+func initLogger() *zap.Logger {
+	logger, err := golog.New()
+	if err != nil {
+		log.Fatalf("got an error while initialize zap logger, error: %s", err)
+	}
+
+	return logger
 }

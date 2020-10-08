@@ -3,9 +3,9 @@ package bootstrap
 import (
 	"context"
 	"github.com/rianekacahya/go-kafka/infrastructure/invoker"
+	"github.com/rianekacahya/go-kafka/infrastructure/middleware/event"
 	"github.com/rianekacahya/go-kafka/infrastructure/persistence"
 	"github.com/rianekacahya/go-kafka/interface/consumers/orders"
-	"github.com/rianekacahya/go-kafka/middleware/event"
 	"github.com/rianekacahya/go-kafka/pkg/goconf"
 	"github.com/rianekacahya/go-kafka/pkg/gokafka"
 	"github.com/rianekacahya/go-kafka/usecase"
@@ -28,9 +28,10 @@ var (
 			database := initMysql()
 			redis := initRedis()
 			telemetry := initTelemetry()
+			logger := initLogger()
 			kafkago := gokafka.New(
 				goconf.Config().GetString("kafka.address"),
-				event.Logger(),
+				event.Logger(logger),
 				event.Telemetry(telemetry),
 				event.RequestID(),
 			)

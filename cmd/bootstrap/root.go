@@ -1,9 +1,8 @@
 package bootstrap
 
 import (
-	"github.com/rianekacahya/go-kafka/pkg/logger"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
+	"log"
 	"os"
 )
 func Execute() {
@@ -16,7 +15,7 @@ func Execute() {
 	)
 
 	if err := command.Execute(); err != nil {
-		logger.Error("Bootstrap", zap.Any("error", err))
+		log.Printf("got an error while initialize, error: %s", err)
 		os.Exit(1)
 	}
 }

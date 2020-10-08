@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"github.com/labstack/echo"
 	"github.com/rianekacahya/go-kafka/infrastructure/invoker"
+	"github.com/rianekacahya/go-kafka/infrastructure/middleware/event"
+	"github.com/rianekacahya/go-kafka/infrastructure/middleware/rest"
 	"github.com/rianekacahya/go-kafka/infrastructure/persistence"
 	"github.com/rianekacahya/go-kafka/interface/http/orders"
-	"github.com/rianekacahya/go-kafka/middleware/event"
-	"github.com/rianekacahya/go-kafka/middleware/rest"
 	"github.com/rianekacahya/go-kafka/pkg/echoserver"
 	"github.com/rianekacahya/go-kafka/pkg/goconf"
 	"github.com/rianekacahya/go-kafka/pkg/gokafka"
@@ -33,9 +33,10 @@ var (
 			database := initMysql()
 			redis := initRedis()
 			telemetry := initTelemetry()
+			logger := initLogger()
 			kafkago := gokafka.New(
 				goconf.Config().GetString("kafka.address"),
-				event.Logger(),
+				event.Logger(logger),
 			)
 
 			// init event invoker
@@ -55,7 +56,7 @@ var (
 			server.Use(
 				rest.CORS(),
 				rest.Headers(),
-				rest.Logger(),
+				rest.Logger(logger),
 				rest.RequestID(),
 				rest.Telemetry(telemetry),
 			)

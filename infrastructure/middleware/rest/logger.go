@@ -3,13 +3,12 @@ package rest
 import (
 	"fmt"
 	"github.com/labstack/echo"
-	"github.com/rianekacahya/go-kafka/pkg/logger"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"time"
 )
 
-func Logger() echo.MiddlewareFunc {
+func Logger(log *zap.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			start := time.Now()
@@ -41,13 +40,13 @@ func Logger() echo.MiddlewareFunc {
 			n := res.Status
 			switch {
 			case n >= 500:
-				logger.GetLogger().Error("Rest Logger", fields...)
+				log.Error("Rest Logger", fields...)
 			case n >= 400:
-				logger.GetLogger().Warn("Rest Logger", fields...)
+				log.Warn("Rest Logger", fields...)
 			case n >= 300:
-				logger.GetLogger().Info("Rest Logger", fields...)
+				log.Info("Rest Logger", fields...)
 			default:
-				logger.GetLogger().Info("Rest Logger", fields...)
+				log.Info("Rest Logger", fields...)
 			}
 
 			return nil
